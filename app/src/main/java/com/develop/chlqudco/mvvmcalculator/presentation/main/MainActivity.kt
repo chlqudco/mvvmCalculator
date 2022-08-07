@@ -37,7 +37,7 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
     }
 
     //C 버튼 클릭
-    fun clearButtonClicked(view: View) = with(binding){
+    fun clearButtonClicked(view: View) = with(binding) {
         viewModel.initOperator()
         mainExpressionTextView.text = ""
         mainResultTextView.text = ""
@@ -99,23 +99,19 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
 
     //계산 결과값 반환해주는 함수
     private fun calculateExpression(): String {
-        val expressionText = binding.mainExpressionTextView.text.split(" ")
+        val expressionText = binding.mainExpressionTextView.text.toString()
+        val splitExpressionText = expressionText.split(" ")
 
         //예외 처리 1.완성된 수식인지 검사
-        if (viewModel.hasOperator.not() || expressionText.size != 3) {
+        if (viewModel.hasOperator.not() || splitExpressionText.size < 3) {
             return ""
         }
 
-        //각 항에 맞게 나눈뒤
-        val exp1 = expressionText[0].toBigInteger()
-        val exp2 = expressionText[2].toBigInteger()
-        val op = expressionText[1]
-
-        return viewModel.calculate(exp1, exp2, op)
-
+        return viewModel.calculate(expressionText)
     }
 
     //연산자를 눌렀을 경우
+    @SuppressLint("SetTextI18n")
     private fun operatorButtonClicked(opertor: String) {
 
         //예외처리 1.아직 아무것도 입력 안한경우 무시
@@ -129,11 +125,6 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
             viewModel.isOperator -> {
                 val text = binding.mainExpressionTextView.text.toString()
                 binding.mainExpressionTextView.text = text.dropLast(1) + opertor
-            }
-            //이미 연산자가 있으면 안돼, 나 계산 못해 ㅠㅠ
-            viewModel.hasOperator -> {
-                Toast.makeText(this, "연산자 아직 하나밖에 못씀 ㅈㅅㅈㅅ", Toast.LENGTH_SHORT).show()
-                return
             }
             //다 아니면 붙여
             else -> {
@@ -163,7 +154,7 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
         binding.historyLayout.isVisible = true
 
         //기록 불러오기
-        CoroutineScope(Dispatchers.Main).launch{
+        CoroutineScope(Dispatchers.Main).launch {
             adapter.historyList = viewModel.getAllHistory()
             adapter.notifyDataSetChanged()
         }
@@ -175,19 +166,18 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
         val splitExpressionText = expressionText.split(" ")
 
         //예외처리 1. 완성되지 않은 수식
-        if (splitExpressionText.size < 3){
-            Toast.makeText(this, "수식이 완성되지 않았습니다.",Toast.LENGTH_SHORT).show()
+        if (splitExpressionText.size < 3) {
+            Toast.makeText(this, "수식이 완성되지 않았습니다.", Toast.LENGTH_SHORT).show()
             return
         }
 
         //결과 계산하기
-        val resultText = viewModel.calculate(splitExpressionText[0].toBigInteger(), splitExpressionText[2].toBigInteger(), splitExpressionText[1])
+        val resultText = viewModel.calculate(expressionText)
 
         //DB에 저장하기
-        CoroutineScope(Dispatchers.Main).launch{
+        CoroutineScope(Dispatchers.Main).launch {
             viewModel.saveToDB(expressionText, resultText)
         }
-
 
         //옮겨주기
         binding.mainExpressionTextView.text = resultText
