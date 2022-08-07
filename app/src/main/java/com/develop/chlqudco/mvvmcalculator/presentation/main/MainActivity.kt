@@ -39,6 +39,7 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
     //C 버튼 클릭
     fun clearButtonClicked(view: View) = with(binding) {
         viewModel.initOperator()
+        viewModel.isDot = false
         mainExpressionTextView.text = ""
         mainResultTextView.text = ""
     }
@@ -57,16 +58,81 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
             R.id.button8 -> numberButtonClicked("8")
             R.id.button9 -> numberButtonClicked("9")
 
-            R.id.buttomModulo -> operatorButtonClicked("%")
             R.id.buttonPlus -> operatorButtonClicked("+")
             R.id.buttonMinus -> operatorButtonClicked("-")
             R.id.buttonMulti -> operatorButtonClicked("*")
             R.id.buttonDivider -> operatorButtonClicked("/")
+
+            R.id.buttonDot -> dotButtonClicked()
+
+            R.id.openBracketButton -> openBracketButtonClicked()
+            R.id.closeBracketButton -> closeBracketButtonClicked()
         }
+    }
+
+    private fun openBracketButtonClicked() {
+        val expressionText = binding.mainExpressionTextView.text.toString()
+
+        //예외처리 1. 숫자 뒤에 바로 괄호가 오면 x 추가
+        if(expressionText.isNotEmpty() && (expressionText[expressionText.length - 1] in '0'..'9')){
+            binding.mainExpressionTextView.append(" * (")
+            viewModel.hasOperator = true
+            return
+        }
+        binding.mainExpressionTextView.append("(")
+        viewModel.openBracketCount += 1
+
+    }
+
+    private fun closeBracketButtonClicked() {
+        //열기 0개면 탈출
+        if (viewModel.openBracketCount == 0){
+            return
+        } else{
+            binding.mainExpressionTextView.append(")")
+            viewModel.openBracketCount -= 1
+        }
+    }
+
+    private fun dotButtonClicked() {
+        val totalText = binding.mainExpressionTextView.text.toString()
+        val expressionText = binding.mainExpressionTextView.text.split(" ")
+
+        //예외처리 0. 이미 찍은 경우
+        if (viewModel.isDot){
+            return
+        }
+
+        //예외처리 1. 비어있는 경우
+        if (totalText.isEmpty()){
+            binding.mainExpressionTextView.text = "0."
+            viewModel.isDot = true
+            return
+        }
+
+        //예외처리 2. 숫자의 시작이 .인 경우
+        if(viewModel.isOperator){
+            binding.mainExpressionTextView.append(" 0.")
+            viewModel.isDot = true
+            viewModel.isOperator = false
+            return
+        }
+
+        //예외처리 3. 15자리가 넘어가지 않도록
+        if (expressionText.isNotEmpty() && expressionText.last().length >= 15) {
+            Toast.makeText(this, "15자리 넘어가지 말아오", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        //다 아니면 점찍어
+        binding.mainExpressionTextView.append(".")
+
+        viewModel.isDot = true
     }
 
     //숫자를 눌렀을 경우
     private fun numberButtonClicked(number: String) {
+
         //직전에 입력한게 연산자면 한칸 띄어
         if (viewModel.isOperator) {
             binding.mainExpressionTextView.append(" ")
@@ -112,10 +178,15 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
 
     //연산자를 눌렀을 경우
     @SuppressLint("SetTextI18n")
-    private fun operatorButtonClicked(opertor: String) {
+    private fun operatorButtonClicked(operator: String) {
 
         //예외처리 1.아직 아무것도 입력 안한경우 무시
         if (binding.mainExpressionTextView.text.isEmpty()) {
+            return
+        }
+
+        //예외처리 2. 직전 입력이 열린 괄호면 무시
+        if (binding.mainExpressionTextView.text.toString()[binding.mainExpressionTextView.text.toString().length - 1] == '('){
             return
         }
 
@@ -124,11 +195,11 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
             //직전에 입력한게 연산자면 교체
             viewModel.isOperator -> {
                 val text = binding.mainExpressionTextView.text.toString()
-                binding.mainExpressionTextView.text = text.dropLast(1) + opertor
+                binding.mainExpressionTextView.text = text.dropLast(1) + operator
             }
             //다 아니면 붙여
             else -> {
-                binding.mainExpressionTextView.append(" $opertor")
+                binding.mainExpressionTextView.append(" $operator")
             }
         }
 
@@ -145,6 +216,7 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
         //방금 연산자 썻고 이젠 들어가니가
         viewModel.isOperator = true
         viewModel.hasOperator = true
+        viewModel.isDot = false
     }
 
     //기록 버튼 클릭

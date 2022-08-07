@@ -76,27 +76,27 @@
                 android:textSize="24sp" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_margin="7dp"
-                android:background="@drawable/button_background"
-                android:clickable="false"
-                android:enabled="false"
-                android:stateListAnimator="@null"
-                android:text="( )"
-                android:textColor="@color/green"
-                android:textSize="24sp" />
-
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttomModulo"
+                android:id="@+id/openBracketButton"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_margin="7dp"
                 android:background="@drawable/button_background"
                 android:onClick="buttonClicked"
                 android:stateListAnimator="@null"
-                android:text="%"
+                android:text="("
+                android:textColor="@color/green"
+                android:textSize="24sp" />
+
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/closeBracketButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_margin="7dp"
+                android:background="@drawable/button_background"
+                android:onClick="buttonClicked"
+                android:stateListAnimator="@null"
+                android:text=")"
                 android:textColor="@color/green"
                 android:textSize="24sp" />
 
@@ -299,7 +299,7 @@
                 android:layout_height="match_parent"
                 android:layout_margin="7dp"
                 android:background="@drawable/button_background"
-                android:onClick="clearButtonClicked"
+                android:onClick="buttonClicked"
                 android:stateListAnimator="@null"
                 android:text="0"
                 android:textColor="@color/black"
@@ -307,12 +307,11 @@
 
 
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/buttonDot"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_margin="7dp"
                 android:background="@drawable/button_background"
-                android:clickable="false"
-                android:enabled="false"
                 android:onClick="buttonClicked"
                 android:stateListAnimator="@null"
                 android:text="."
@@ -350,7 +349,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/mainTableLayout"
-        tools:visibility="visible">
+        tools:visibility="gone">
 
         <View
             android:layout_width="0dp"
