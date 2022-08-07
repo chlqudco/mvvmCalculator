@@ -76,6 +76,7 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
         //예외처리 1. 숫자 뒤에 바로 괄호가 오면 x 추가
         if(expressionText.isNotEmpty() && (expressionText[expressionText.length - 1] in '0'..'9')){
             binding.mainExpressionTextView.append(" * (")
+            viewModel.openBracketCount += 1
             viewModel.hasOperator = true
             return
         }
@@ -159,7 +160,9 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
         //마지막으로 뒤에 붙이기
         binding.mainExpressionTextView.append(number)
         //결과 텍스트뷰에 추가하기
-        binding.mainResultTextView.text = calculateExpression()
+        if (viewModel.openBracketCount == 0){
+            binding.mainResultTextView.text = calculateExpression()
+        }
 
     }
 
