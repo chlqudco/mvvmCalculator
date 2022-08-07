@@ -19,7 +19,7 @@
         app:layout_constraintVertical_weight="1" />
 
     <TextView
-        android:id="@+id/expressionTextView"
+        android:id="@+id/mainExpressionTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
@@ -34,7 +34,7 @@
         tools:text="1111111111 + 22222222" />
 
     <TextView
-        android:id="@+id/resultTextView"
+        android:id="@+id/mainResultTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
@@ -350,7 +350,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/mainTableLayout"
-        tools:visibility="gone">
+        tools:visibility="visible">
 
         <View
             android:layout_width="0dp"
@@ -360,21 +360,14 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ScrollView
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/mainHistoryRecyclerView"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toTopOf="@id/historyClearButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/closeButton">
-
-            <LinearLayout
-                android:id="@+id/historyLinearLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-        </ScrollView>
+            app:layout_constraintTop_toBottomOf="@id/closeButton"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/closeButton"

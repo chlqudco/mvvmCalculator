@@ -1,8 +1,21 @@
 package com.develop.chlqudco.mvvmcalculator.presentation.main
 
+import android.annotation.SuppressLint
+import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.view.View
+import android.widget.Toast
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.develop.chlqudco.mvvmcalculator.R
 import com.develop.chlqudco.mvvmcalculator.databinding.ActivityMainBinding
 import com.develop.chlqudco.mvvmcalculator.presentation.BaseActivity
+import com.develop.chlqudco.mvvmcalculator.presentation.adapter.HistoryAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>() {
@@ -10,10 +23,191 @@ internal class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>()
     override val viewModel by viewModel<MainViewModel>()
     override fun getViewBinding(): ActivityMainBinding = ActivityMainBinding.inflate(layoutInflater)
 
-    fun clearButtonClicked(view: View) {}
-    fun buttonClicked(view: View) {}
-    fun historyButtonClicked(view: View) {}
-    fun resultButtonClicked(view: View) {}
-    fun historyClearButtonClicked(view: View) {}
-    fun closeHistoryButtonClicked(view: View) {}
+    private val adapter: HistoryAdapter = HistoryAdapter()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        initViews()
+    }
+
+    private fun initViews() {
+        binding.mainHistoryRecyclerView.adapter = adapter
+        binding.mainHistoryRecyclerView.layoutManager = LinearLayoutManager(this)
+    }
+
+    //C 버튼 클릭
+    fun clearButtonClicked(view: View) = with(binding){
+        viewModel.initOperator()
+        mainExpressionTextView.text = ""
+        mainResultTextView.text = ""
+    }
+
+    fun buttonClicked(v: View) {
+        //id에 따라 분기
+        when (v.id) {
+            R.id.button0 -> numberButtonClicked("0")
+            R.id.button1 -> numberButtonClicked("1")
+            R.id.button2 -> numberButtonClicked("2")
+            R.id.button3 -> numberButtonClicked("3")
+            R.id.button4 -> numberButtonClicked("4")
+            R.id.button5 -> numberButtonClicked("5")
+            R.id.button6 -> numberButtonClicked("6")
+            R.id.button7 -> numberButtonClicked("7")
+            R.id.button8 -> numberButtonClicked("8")
+            R.id.button9 -> numberButtonClicked("9")
+
+            R.id.buttomModulo -> operatorButtonClicked("%")
+            R.id.buttonPlus -> operatorButtonClicked("+")
+            R.id.buttonMinus -> operatorButtonClicked("-")
+            R.id.buttonMulti -> operatorButtonClicked("*")
+            R.id.buttonDivider -> operatorButtonClicked("/")
+        }
+    }
+
+    //숫자를 눌렀을 경우
+    private fun numberButtonClicked(number: String) {
+        //직전에 입력한게 연산자면 한칸 띄어
+        if (viewModel.isOperator) {
+            binding.mainExpressionTextView.append(" ")
+        }
+
+        //일단 무적건 숫자니까 false 주기
+        viewModel.isOperator = false
+
+        //텍스트 가져와서 뒤에 넣기
+        val expressionText = binding.mainExpressionTextView.text.split(" ")
+
+        //예외처리 1. 15자리가 넘어가지 않도록
+        if (expressionText.isNotEmpty() && expressionText.last().length >= 15) {
+            Toast.makeText(this, "15자리 넘어가지 말아오", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        //예외처리 2. 맨앞에 0이 오면 추가X
+        if (expressionText.last().isEmpty() && number == "0") {
+            Toast.makeText(this, "0으로 시작하지 말아오", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        //마지막으로 뒤에 붙이기
+        binding.mainExpressionTextView.append(number)
+        //결과 텍스트뷰에 추가하기
+        binding.mainResultTextView.text = calculateExpression()
+
+    }
+
+    //계산 결과값 반환해주는 함수
+    private fun calculateExpression(): String {
+        val expressionText = binding.mainExpressionTextView.text.split(" ")
+
+        //예외 처리 1.완성된 수식인지 검사
+        if (viewModel.hasOperator.not() || expressionText.size != 3) {
+            return ""
+        }
+
+        //각 항에 맞게 나눈뒤
+        val exp1 = expressionText[0].toBigInteger()
+        val exp2 = expressionText[2].toBigInteger()
+        val op = expressionText[1]
+
+        return viewModel.calculate(exp1, exp2, op)
+
+    }
+
+    //연산자를 눌렀을 경우
+    private fun operatorButtonClicked(opertor: String) {
+
+        //예외처리 1.아직 아무것도 입력 안한경우 무시
+        if (binding.mainExpressionTextView.text.isEmpty()) {
+            return
+        }
+
+        //경우에 따라 분기
+        when {
+            //직전에 입력한게 연산자면 교체
+            viewModel.isOperator -> {
+                val text = binding.mainExpressionTextView.text.toString()
+                binding.mainExpressionTextView.text = text.dropLast(1) + opertor
+            }
+            //이미 연산자가 있으면 안돼, 나 계산 못해 ㅠㅠ
+            viewModel.hasOperator -> {
+                Toast.makeText(this, "연산자 아직 하나밖에 못씀 ㅈㅅㅈㅅ", Toast.LENGTH_SHORT).show()
+                return
+            }
+            //다 아니면 붙여
+            else -> {
+                binding.mainExpressionTextView.append(" $opertor")
+            }
+        }
+
+        //연산자 잘보이게 색깔 변경하기
+        val ssb = SpannableStringBuilder(binding.mainExpressionTextView.text)
+        ssb.setSpan(
+            ForegroundColorSpan(getColor(R.color.green)),
+            binding.mainExpressionTextView.text.length - 1,
+            binding.mainExpressionTextView.text.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        binding.mainExpressionTextView.text = ssb
+
+        //방금 연산자 썻고 이젠 들어가니가
+        viewModel.isOperator = true
+        viewModel.hasOperator = true
+    }
+
+    //기록 버튼 클릭
+    @SuppressLint("NotifyDataSetChanged")
+    fun historyButtonClicked(view: View) {
+        //뷰 초기화
+        binding.historyLayout.isVisible = true
+
+        //기록 불러오기
+        CoroutineScope(Dispatchers.Main).launch{
+            adapter.historyList = viewModel.getAllHistory()
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    //계산 함수
+    fun resultButtonClicked(view: View) {
+        val expressionText = binding.mainExpressionTextView.text.toString()
+        val splitExpressionText = expressionText.split(" ")
+
+        //예외처리 1. 완성되지 않은 수식
+        if (splitExpressionText.size < 3){
+            Toast.makeText(this, "수식이 완성되지 않았습니다.",Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        //결과 계산하기
+        val resultText = viewModel.calculate(splitExpressionText[0].toBigInteger(), splitExpressionText[2].toBigInteger(), splitExpressionText[1])
+
+        //DB에 저장하기
+        CoroutineScope(Dispatchers.Main).launch{
+            viewModel.saveToDB(expressionText, resultText)
+        }
+
+
+        //옮겨주기
+        binding.mainExpressionTextView.text = resultText
+        binding.mainResultTextView.text = ""
+
+        //초기화
+        viewModel.initOperator()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun historyClearButtonClicked(view: View) {
+        //기록 초기화 하기
+        CoroutineScope(Dispatchers.Main).launch {
+            viewModel.deleteAllHistory()
+            adapter.historyList = viewModel.getAllHistory()
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    fun closeHistoryButtonClicked(view: View) {
+        binding.historyLayout.isVisible = false
+    }
 }
